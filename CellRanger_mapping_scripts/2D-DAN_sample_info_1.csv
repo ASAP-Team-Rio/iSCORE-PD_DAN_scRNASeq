@@ -1,0 +1,14 @@
+[gene-expression],,
+reference,/global/scratch/users/jessedunnack/refdata-gex-GRCh38-2020-A,
+,,
+[libraries],,
+fastq_id,fastqs,feature_types
+GE1,/global/scratch/users/jessedunnack/2D_DAN_scRNASeq/Reads/SI-TT-C9,Gene Expression
+CM1,/global/scratch/users/jessedunnack/2D_DAN_scRNASeq/Reads/SI-NN-D1,Multiplexing Capture
+,,
+[samples],,
+sample_id,cmo_ids,
+DAN_01_X,CMO301,
+DAN_01_Y,CMO302,
+WT_S1,CMO303,
+DAN_01_Z,CMO304,
