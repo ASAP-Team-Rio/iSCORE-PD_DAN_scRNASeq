@@ -44,34 +44,53 @@ pseudoBulk_spearman <- function(obj_1, obj_2, labels_1, labels_2, assay, n_var_f
     print(df)
     return(df)
 }
-markers <- function(x, phrase, var, min_pct, lfc_cutoff) {
-     if (is.null(var)) {
-         markers <- FindAllMarkers(x, only.pos = FALSE, min.pct = min_pct, logfc.threshold = lfc_cutoff) 
-         markers %>%
-             group_by(cluster) %>%
-             top_n(n = 10, wt = avg_log2FC) -> top10
-         p <- DoHeatmap(x, features = top10$gene) + NoLegend()
-         ggsave(filename = paste0(phrase, "_MarkerHeatMap.png"), plot = p, device = "png", width = 30, height = 25)
-         write.csv(markers, file = paste0(phrase, "_markers.csv"))
-         write.csv(top10, file = paste0(phrase, "_top10markers.csv"))
-     } else {
-         x <- SetIdent(x, value = var)
-         markers <- FindAllMarkers(x, only.pos = FALSE, min.pct = min_pct, logfc.threshold = lfc_cutoff) 
-         markers %>%
-             group_by(cluster) %>%
-             top_n(n = 10, wt = avg_log2FC) -> top10
-         p <- DoHeatmap(x, features = top10$gene) + NoLegend()
-         ggsave(filename = paste0(phrase, "_MarkerHeatMap.png"), plot = p, device = "png", width = 30, height = 25)
-         write.csv(markers, file = paste0(phrase, "_markers_by_", var, ".csv"))
-         write.csv(top10, file = paste0(phrase, "_top10markers_by_", var, ".csv")) 
-     }
+markers <-function(x, phrase, var, min_pct, lfc_cutoff, test) {
+    if (is.null(var)) {
+        markers <- FindAllMarkers(x, only.pos = FALSE, min.pct = min_pct, logfc.threshold = lfc_cutoff, test.use = test) 
+        markers %>%
+            group_by(cluster) %>%
+            top_n(n = 10, wt = avg_log2FC) -> top10
+        p <- DoHeatmap(x, features = top10$gene) + NoLegend()
+        ggsave(filename = paste0(phrase, "_MarkerHeatMap.png"), plot = p, device = "png", width = 30, height = 25)
+        write.csv(markers, file = paste0(phrase, "_markers.csv"))
+        write.csv(top10, file = paste0(phrase, "_top10markers.csv"))
+    } else {
+        x <- SetIdent(x, value = var)
+        markers <- FindAllMarkers(x, only.pos = FALSE, min.pct = min_pct, logfc.threshold = lfc_cutoff, test.use = test) 
+        markers %>%
+            group_by(cluster) %>%
+            top_n(n = 10, wt = avg_log2FC) -> top10
+        p <- DoHeatmap(x, features = top10$gene) + NoLegend()
+        ggsave(filename = paste0(phrase, "_MarkerHeatMap.png"), plot = p, device = "png", width = 30, height = 25)
+        write.csv(markers, file = paste0(phrase, "_markers_by_", var, ".csv"))
+        write.csv(top10, file = paste0(phrase, "_top10markers_by_", var, ".csv")) 
+    }
 }
 
-### PSEUDOBULK SPEARMAN CODE FIG 2E
+####
+#### Fig. 2C - UMAP with coarse cluster labels.
+####
+dittoDimPlot(all, "seurat_clusters_coarse", do.label = T, labels.size = 12, labels.repel = T)
+
+
+####
+#### Fig. 2D  - DotPlot of key marker genes
+####
+all@active.ident <- factor(all@active.ident, levels=c("0","1","4","6","3","5","2"))
+goi <- c("TH","NR4A2","KCNJ6","LMX1B","LMX1A","STMN2",
+           "MAP2","GAP43","SNAP25","SNCA","SYN1","ROBO1",
+           "FOXA2","SLC18A1","SLC18A2","TPH1","MKI67",
+           "HES1","SLIT2","FOXP2","CORIN","SOX6","CALB1")
+DotPlot(all, features = goi, assay = 'SCT', dot.scale = 8, scale.by = "size") + scale_color_gradientn(colors = RColorBrewer::brewer.pal(9, "Oranges")) + RotatedAxis()
+
+
+####
+#### Fig. 2E  - Heatmap of Spearmann correlations of pseudobulked WIBR3 DAN clusters vs pseudobulked FOUNDIN-PD clusters.
+####
 mtx <- pseudoBulk_spearman(all, foundin, "seurat_clusters_coarse", "CellType", "RNA", n_var_features = 3000)
 saveRDS(mtx, "all_v_FOUNDIN_FULL_Spearman_matrix_RNA3000.rds")
 mtx <- readRDS("all_v_FOUNDIN_Spearman_matrix_RNA3000.rds")
-pheatmap(mtx2,
+pheatmap(mtx,
     main = "Heatmap of Spearman correlations \n WIBR3 vs. FOUNDIN-PD DA Neurons\n (RNA Assay, pseudobulked clusters) \n Input = 3000 variable genes", 
     fontsize = 12, 
     clustering_method = "ward.D2", 
@@ -81,107 +100,122 @@ pheatmap(mtx2,
     treeheight_col = 30)
 
 
-#Identifying marker genes that define identity classes
-markers(all, "all_WIBR3_DAN_coarse_clusters", "seurat_clusters_coarse", 0.3, 0.5)
-markers(all, "all_WIBR3_DAN_fine_clusters", "seurat_clusters_fine", 0.3, 0.5)
-markers(all, "all_WIBR3_DAN_SingleR_Assignments", "FOUNDIN_PD_assignment_singleR", 0.3, 0.5)
-markers(all, "all_WIBR3_DAN_Seurat_Assignments", "FOUNDIN_PD_assignment_seurat", 0.3, 0.5)
+####
+#### Fig. S3A  - UMAPs of WIBR3 DAN labeled with coarse cluster labels, and split by subclone identity.
+####
+dittoDimPlot(all, "seurat_clusters_coarse", split.by = "subclone_ID", do.label = T, labels.size = 12, labels.repel = T, size=1.8)
 
-#Plotting the heatmap
-m <- read.csv("all_WIBR3_DAN_markers_by_seurat_clusters.csv")
+
+####
+#### Fig. S3B  - Heatmap of top 10 cluster-defining markers in WIBR3 DAN dataset.
+####
+markers(all, "all_WIBR3_DAN_coarse_clusters_MAST", "seurat_clusters_coarse", 0.3, 0.5, "MAST")
+m <- read.csv("all_WIBR3_DAN_coarse_clusters_MAST_markers_by_seurat_clusters_coarse.csv")
 m %>%
     group_by(cluster) %>%
     top_n(n = 10, wt = avg_log2FC) -> top10
-p <- DoHeatmap(all, features = top10$gene) + NoLegend()
-p
-ggsave(filename = "all_WIBR3_DAN_Coarse_Clusters_Top10_MarkerHeatMap.png", plot = p, device = "png", width = 30, height = 25)
+DoHeatmap(all, features = top10$gene, group.colors = dittoColors(), raster =F)
 
+
+####
+#### Fig. S3C  - Violin plots of quality control metrics for WIBR3 DAN dataset.
+####
+dittoPlot(all, "nFeature_RNA", group.by = "subclone_ID", vlnplot.width = 0.5, plots = c("vlnplot","boxplot"), boxplot.show.outliers = T, vlnplot.lineweight = 0.25, boxplot.lineweight = 0.25)
+dittoPlot(all, "nCount_RNA", group.by = "subclone_ID", vlnplot.width = 0.5, plots = c("vlnplot","boxplot"), boxplot.show.outliers = T, vlnplot.lineweight = 0.25, boxplot.lineweight = 0.25)
+
+
+####
+#### Fig. S3D  - FeaturePlots of key marker genes in the WIBR3 DAN dataset.
+####
+FeaturePlot(all, features = "TH", reduction = "umap", order = TRUE, pt.size = 2)
+FeaturePlot(all, features = "KCNJ6", reduction = "umap", order = TRUE, pt.size = 2)
+FeaturePlot(all, features = "NR4A2", reduction = "umap", order = TRUE, pt.size = 2)
+FeaturePlot(all, features = "CALB1", reduction = "umap", order = TRUE, pt.size = 2)
+FeaturePlot(all, features = "SOX6", reduction = "umap", order = TRUE, pt.size = 2)
+FeaturePlot(all, features = "FOXA2", reduction = "umap", order = TRUE, pt.size = 2)
 
 
 ###
-#DOT PLOT CODE
+### Fig. S4A-i - UMAP of WIBR3 DAN cells, with FOUNDIN-PD cell type labels (applied by SingleR with FOUNDIN-PD cell types used as a reference).
 ###
-goi <- c("GAP43", "MAPT","STMN2","TUBB3","TAC1","NEFL","SNCA","NCAM2",
-         "ZCCHC12","ATP1A3","SNAP25","VGF","NKAIN2","CNTNAP2","CTNNA2",
-         "SYT1","NRXN1","NRG3","SGCZ","NRG1","DCC","CNTNAP5","KCNJ6","NRXN3","TH",
-         "SLC18A2","SLC18A1","TPH1","CALCA","CGA","CHGA","DLK1",
-         "VCAN","LGALS1","HMGB2","CENPF","UBE2C","TOP2A","MKI67",
-         "HES1","CALB1","SLIT2","VIM","SPARC","FOXP2","CORIN","SOX6")
-goi_2 <- c("MAPT","STMN2","GAP43","SNAP25","SNCA","CNTNAP2","LMX1A","LMX1B","KCNJ6",
-           "TH", "SLC18A1","SLC18A2","TPH1","CALCA","CGA","CHGA","DLK1",
-           "VCAN","LGALS1","UBE2C","TOP2A","MKI67","HES1","CALB1","SLIT2",
-           "VIM","SPARC","FOXP2","CORIN","SOX6","FOXA2","NR4A2")
-dittoDotPlot(all, goi_2, group.by = "seurat_clusters", y.reorder =c (1,2,5,4,6,3), size = 8)
+dittoDimPlot(all, "FOUNDIN_PD_assignment_singleR",
+             colors = c(10,1,6,4,3,11,5,8,2,9,7), 
+             do.label = T, 
+             labels.repel = T, 
+             labels.size = 5, 
+             size = 1.5)
 
-#SEURAT DOTPLOT VERSION
-all@active.ident <- factor(all@active.ident, levels=c("0","1","4","6","3","5","2"))
-goi_2 <- c("STMN2","GAP43","MAPT","SNAP25","SNCA","CNTNAP2","LMX1A","LMX1B","KCNJ6",
-           "TH","NR4A2","FOXA2","SLC18A1","SLC18A2","TPH1","CALCA","CGA","CHGA","DLK1",
-           "VCAN","LGALS1","UBE2C","TOP2A","MKI67","HES1","CALB1","SLIT2",
-           "VIM","SPARC","FOXP2","CORIN","SOX6")
-DotPlot(all, features = goi_2, assay = 'SCT', dot.scale = 8, scale.by = "size")+scale_color_gradientn(colors = RColorBrewer::brewer.pal(9, "Oranges")) +RotatedAxis()
-
-
-all@active.ident <- factor(all@active.ident, levels=c("0","1","4","6","3","5","2"))
-goi_2 <- c("TH","NR4A2","KCNJ6","LMX1B","LMX1A","STMN2",
-           "MAP2","GAP43","SNAP25","SNCA","SYN1","ROBO1",
-           "FOXA2","SLC18A1","SLC18A2","TPH1","MKI67",
-           "HES1","SLIT2","FOXP2","CORIN","SOX6","CALB1")
-DotPlot(all, features = goi_2, assay = 'SCT', dot.scale = 8, scale.by = "size")+scale_color_gradientn(colors = RColorBrewer::brewer.pal(9, "Oranges")) +RotatedAxis()
-
-
-
-#FINAL UMAP PLOT CODE:
-
-a <- dittoDimPlot(all, "seurat_clusters", reduction.use = "ref.umap", main = "WIBR3 DAN", sub = "By Seurat Clustering", do.contour = T, contour.linetype = 6)
-b <- dittoDimPlot(all, all$SingleR_wilcox100_pruned_labels, reduction.use = "ref.umap", main = "WIBR3 DAN", sub = "By SingleR cell type assignments", do.contour = T, contour.linetype = 6)
-c <- dittoDimPlot(all, all$Seurat_label_transfer_celltype, reduction.use = "ref.umap", main = "WIBR3 DAN", sub = "By Seurat Label Transfer", do.contour = T, contour.linetype = 6)
-wrap_plots(a,a,b,c, ncol = 2, nrow = 2)
-
-
-
-x <- dittoDimPlot(all, "seurat_clusters", reduction.use = "umap", main = "WIBR3 DAN", sub = "By Seurat Clustering", do.contour = T, contour.linetype = 3)
-y <- dittoDimPlot(all, all$SingleR_wilcox100_pruned_labels, reduction.use = "umap", main = "WIBR3 DAN", sub = "By SingleR cell type assignments", do.contour = T, contour.linetype = 3)
-z <- dittoDimPlot(all, all$Seurat_label_transfer_celltype, reduction.use = "umap", main = "WIBR3 DAN", sub = "By Seurat Label Transfer", do.contour = T, contour.linetype = 3)
-wrap_plots(x,x,y,z, ncol = 2, nrow = 2)
+###
+### Fig. S4A-ii - Stacked barplots showing the breakdown of cell types in both the WIBR3 DAN and FOUNDIN-PD datasets.
+###
+### First for WIBR3 DAN dataset.
+Idents(all) <- "FOUNDIN_PD_assignment_singleR"
+pt <- table(Idents(all), all$FOUNDIN_PD_assignment_singleR)
+pt <- as.data.frame(pt)
+pt <- filter(pt, Freq > 0)
+desired_order <- c("iDA1", "iDA2", "iDA3", "iDA4", "lProg1", "lProg2", "eProg1", "eProg2", "PFPP", "Ependymal", "NE")
+pt$Var1 <- factor(pt$Var1, levels = desired_order)
+pt <- arrange(pt, factor(Var1, levels = c("iDA1","iDA2","iDA3","iDA4","lProg1","lProg2","eProg1","eProg2","PFPP","Ependymal","NE")))
+ggplot(pt, aes(x = 1, y = Freq, fill = Var1)) +
+    theme_bw(base_size = 15) + geom_col(position = "fill", width = 0.5) +
+    xlab("Sample") + ylab("Proportion") +
+    scale_fill_manual(values=colors) + theme(legend.title = element_blank()) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+### Repeat for FOUNDIN-PD dataset.
+Idents(foundin) <- "CellType"
+pt <- table(Idents(foundin), foundin$CellType)
+pt <- as.data.frame(pt)
+pt <- filter(pt, Freq > 0)
+desired_order <- c("iDA1", "iDA2", "iDA3", "iDA4", "lProg1", "lProg2", "eProg1", "eProg2", "PFPP", "Ependymal", "NE")
+pt$Var1 <- factor(pt$Var1, levels = desired_order)
+pt <- arrange(pt, factor(Var1, levels = c("iDA1","iDA2","iDA3","iDA4","lProg1","lProg2","eProg1","eProg2","PFPP","Ependymal","NE")))
+ggplot(pt, aes(x = 1, y = Freq, fill = Var1)) +
+    theme_bw(base_size = 15) + geom_col(position = "fill", width = 0.5) +
+    xlab("Sample") + ylab("Proportion") +
+    scale_fill_manual(values=colors) + theme(legend.title = element_blank()) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
-
-dittoDimPlot(all, "seurat_clusters_coarse", do.label = T, labels.size = 12, labels.repel = T)
-#### UMAP SPLIT BY SUBCLONE
-dittoDimPlot(all, "seurat_clusters_coarse", split.by = "subclone_ID", do.label = T, labels.size = 12, labels.repel = T)
-
-##Violin Plot code ffor supplement:
-dittoPlot(x, "nFeature_RNA", group.by = "subclone_ID", vlnplot.width = 0.5, plots = c("vlnplot","boxplot"), boxplot.show.outliers = T, vlnplot.lineweight = 0.25, boxplot.lineweight = 0.25)
-dittoPlot(x, "nCount_RNA", group.by = "subclone_ID", vlnplot.width = 0.5, plots = c("vlnplot","boxplot"), boxplot.show.outliers = T, vlnplot.lineweight = 0.25, boxplot.lineweight = 0.25)
-
-
-### DimPlots that show FOUNDIN-PD cell assignment scores
-dittoDimPlot(all, "FOUNDIN_PD_assignment_score_seurat", size = 1.5)
-dittoDimPlot(all, "FOUNDIN_PD_assignment_score_singleR", size = 1.5)
-dittoDimPlot(all, "FOUNDIN_PD_assignment_score_singleR_normalized", size = 1.5)
+###
+### Fig. S4A-iii - Default umap of the FOUNDIN-PD dataset, with cell type labels applied.
+###
+dittoDimPlot(foundin, "CellType", 
+    reduction.use = "umap", 
+    do.label = T, 
+    labels.repel =T,  
+    do.raster = TRUE)
 
 
-
-
-plots(all, "all_WIBR3_DAN")
-markers(all, "seurat_clusters_coarse", "all_WIBR3_DAN_coarse_clusters", 0.3, 0.5)
-markers(all, "seurat_clusters_fine", "all_WIBR3_DAN_fine_clusters", 0.3, 0.5)
-markers(all, "FOUNDIN_PD_assignment_seurat", "all_WIBR3_DAN_FOUNDIN-PD_labels_seurat", 0.3, 0.5)
-markers(all, "FOUNDIN_PD_assignment_singleR", "all_WIBR3_DAN_FOUNDIN-PD_labels_singleR", 0.3, 0.5)
-
-
-
-
-#Figure Code - SingleR score heatmap
+###
+### Fig. S4B - Heatmap of SingleR cell assignment scores, comparing WIBR3 DAN cells to the full FOUNDIN-PD reference dataset.
+###
 FOUNDIN_PD_assignment_singleR <- readRDS("SingleR_FOUNDIN-PD_assignments.rds")
-
 plotScoreHeatmap(FOUNDIN_PD_assignment_singleR, 
                  show.labels = T, 
                  cluster_cols = F, 
                  show.pruned = F)
 
 
+###
+### Fig. S4C - WIBR3 DAN cells, labeled with FOUNDIN-PD cell type labels, presented in the UMAP space from the FOUNDIN-PD dataset.
+###
+dittoDimPlot(all, "FOUNDIN_PD_assignment_singleR", 
+    reduction.use = "ref.umap", 
+    colors = c(10,1,6,4,3,11,5,8,2,9,7), 
+    do.label = T, 
+    labels.repel = T, 
+    labels.size = 5, 
+    size = 1.5)
 
 
-c("Ependymal","eProg1","eProg2","iDA1","iDA2","iDA3","iDA4","lProg1","lProg2","NE","PFPP")
+###
+### Fig. S4D - Heatmap of top 10 marker genes that define the FOUNDIN-PD cell type labels that were applied to the WIBR3 DAN dataset by SingleR.
+###
+markers(all, "all_WIBR3_DAN_SingleR_Assignments_MAST", "FOUNDIN_PD_assignment_singleR", 0.3, 0.5, "MAST")
+m <- read.csv("all_WIBR3_DAN_SingleR_Assignments_MAST_markers_by_FOUNDIN_PD_assignment_singleR.csv")
+m %>%
+    group_by(cluster) %>%
+    top_n(n = 10, wt = avg_log2FC) -> top10
+DoHeatmap(all, features = top10$gene, group.colors = c("#F0E442","#009E73","#007756","#0072B2",
+                                                           "#666666","#56B4E9","#E69F00","#D55E00",
+                                                           "#CC79A7","#1C91D4","#AD7700"),raster =F)
