@@ -1,4 +1,4 @@
-## Run on HPC cluster to speed up analysis
+## Run on Berkeley's Savio HPC cluster to speed up analysis
 ## Used conda environment "seuratv4"
 ## See "seuratv4_environment.yml" for more info.
 
