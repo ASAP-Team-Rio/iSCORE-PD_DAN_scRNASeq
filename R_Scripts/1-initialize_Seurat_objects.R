@@ -14,7 +14,7 @@ g2m.genes <- cc.genes$g2m.genes
 setwd("E:/ASAP/scRNASeq/2D_DAN/all_WT_analysis/iSCORE-PD/")
 
 add_cellranger_demux_results <- function(seurat_obj, name){
-    assignment_table <- read.csv(paste0("./demux_analysis/",name,"_assignment_confidence_table.csv"))
+    assignment_table <- read.csv(paste0("./cellRanger_outputs/",name,"/",name,"_assignment_confidence_table.csv"))
     rownames(assignment_table) <- assignment_table$Barcode
     assignment_table <- subset(assignment_table, select = c("Multiplet", "Assignment", "Assignment_Probability"))
     colnames(assignment_table) <- paste0('CR_', colnames(assignment_table))
@@ -37,7 +37,7 @@ add_metadata <- function(seurat_obj, name, meta_csv_path) {
 }
 initialize_seurat_object <- function(name) {
     raw_counts <- Read10X(paste0("./count_matrices/",name,"/"))
-    assignment_table <- read.csv(paste0("./demux_analysis/",name,"_assignment_confidence_table.csv"))
+    assignment_table <- read.csv(paste0("./cellRanger_outputs/",name,"/",name,"_assignment_confidence_table.csv"))
     barcodes_to_keep <- assignment_table$Barcode
     x <- CreateSeuratObject(counts = raw_counts$`Gene Expression`)
     x[['CMO']] = CreateAssayObject(counts = raw_counts$`Multiplexing Capture`)

@@ -32,18 +32,17 @@ all.anchors <- FindTransferAnchors(reference = foundin, query = all, dims = 1:30
                                     reference.reduction = "pca", normalization.method = "LogNormalize", 
                                     query.assay = "RNA", reference.assay = "RNA", features = intersect(rownames(all),rownames(foundin)))
 predictions <- TransferData(anchorset = all.anchors, refdata = foundin$CellType, dims = 1:30)
+saveRDS(predictions, "Seurat_FOUNDIN-PD_assignments.rds")
+
 all <- AddMetaData(all, metadata = predictions)
 all <- MapQuery(anchorset = all.anchors, reference = foundin, query = all,
                 refdata = list(celltype = "CellType"), reference.reduction = "pca", reduction.model = "umap")
 
 # Append FOUNDIN-PD cell assignments done by Seurat to our dataset.
-FOUNDIN_PD_assignment_seurat <- readRDS("Seurat_FOUNDIN-PD_assignments.rds")
-all$FOUNDIN_PD_assignment_seurat <- FOUNDIN_PD_assignment_seurat$predicted.id
-all$FOUNDIN_PD_assignment_score_seurat <- FOUNDIN_PD_assignment_seurat$prediction.score.max
-
-saveRDS(predictions, "Seurat_FOUNDIN-PD_assignments.rds")
+predictions <- readRDS("Seurat_FOUNDIN-PD_assignments.rds")
+all$FOUNDIN_PD_assignment_seurat <- predictions$predicted.id
+all$FOUNDIN_PD_assignment_score_seurat <- predictions$prediction.score.max
 saveRDS(all, "all_WIBR3_DAN.rds")
-
 
 ###
 ### FOUNDIN-PD comparison using SingleR
@@ -63,8 +62,9 @@ saveRDS(pred_wilcox, "SingleR_FOUNDIN-PD_assignments.rds")
 
 
 # Append FOUNDIN-PD cell assignments done by SingleR to our dataset.
-FOUNDIN_PD_assignment_singleR <- readRDS("SingleR_FOUNDIN-PD_assignments.rds") 
-all$FOUNDIN_PD_assignment_singleR <- as.data.frame(FOUNDIN_PD_assignment_singleR)$pruned.labels
+pred_wilcox <- readRDS("SingleR_FOUNDIN-PD_assignments.rds") 
+all$FOUNDIN_PD_assignment_singleR <- as.data.frame(pred_wilcox)$pruned.labels
+
 meta_data_table <- all@meta.data
 singleR_table <- as.data.frame(FOUNDIN_PD_assignment_singleR)
 for (row_index in 1:nrow(meta_data_table)) {
@@ -96,5 +96,19 @@ all$seurat_clusters_coarse <- all$seurat_clusters
 x <- all$FOUNDIN_PD_assignment_score_singleR
 normalized = (x-min(x))/(max(x)-min(x))
 all@meta.data$FOUNDIN_PD_assignment_score_singleR_normalized <- normalized
+
+
+# Clean up metadata of final Seurat object.
+all$seurat_clusters <- NULL
+all$SCT_snn_res.0.18 <- NULL
+all$SCT_snn_res.0.8 <- NULL
+all@meta.data <- all@meta.data %>%
+  select(c("experiment_ID","genetic_background","genotype_ID","subclone_ID","age",
+  "assay_date","nCount_RNA","nFeature_RNA","nCount_CMO","nFeature_CMO","nCount_SCT",
+  "nFeature_SCT","percent.mt","percent.ribo","S.Score","G2M.Score","Phase",
+  "CR_Multiplet","CR_Assignment","CR_Assignment_Probability","seurat_clusters_fine",
+  "seurat_clusters_coarse","FOUNDIN_PD_assignment_seurat","FOUNDIN_PD_assignment_score_seurat",
+  "FOUNDIN_PD_assignment_singleR","FOUNDIN_PD_assignment_score_singleR",
+  "FOUNDIN_PD_assignment_score_singleR_normalized"))
 
 saveRDS(all, "all_WIBR3_DAN.rds")
