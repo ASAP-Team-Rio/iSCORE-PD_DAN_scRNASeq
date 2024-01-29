@@ -4,7 +4,7 @@ iSCORE-PD: An isogenic stem cell collection to research Parkinson’s Disease
 
 The following is a codebase covering the analysis of scRNASeq data of human midbrain dopaminergic neurons differentiated in vitro from hESCs.
 
-OVERVIEW: 
+WORKFLOW OVERVIEW: 
 
 A) CellRanger:
   1) Map raw reads + generate count matrices with 10x Genomics' CellRanger suite.
