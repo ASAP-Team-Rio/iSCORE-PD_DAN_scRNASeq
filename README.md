@@ -14,3 +14,5 @@ B) Seurat in R:
   2) Integrate the 3 subclones to generate an aggregate dataset of human midbrain DANs.
   3) Evaluate cells against FOUNDIN-PD reference dataset.
   4) Visualize results, generate necessary plots.
+
+[![DOI](https://zenodo.org/badge/741244123.svg)](https://zenodo.org/doi/10.5281/zenodo.10718769)
