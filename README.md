@@ -1,6 +1,8 @@
 # iSCORE-PD_DAN_scRNASeq
 
-iSCORE-PD: An isogenic stem cell collection to research Parkinson’s Disease
+**iSCORE-PD: an isogenic stem cell collection to research Parkinson’s Disease**
+Oriol **Busquets**, Hanqin **Li**, Khaja Mohieddin **Syed**, Pilar **Alvarez Jerez**, Jesse **Dunnack**, Riana Lo Bu, Yogendra Verma, Gabriella R. Pangilinan, Annika Martin, Jannes Straub, YuXin Du, Vivien M. Simon, Steven Poser, Zipporiah Bush, Jessica Diaz, Atehsa Sahagun, Jianpu Gao, Dena G. Hernandez, Kristin S. Levine, Ezgi O. Booth, Helen S. Bateup, Donald C. Rio, Dirk Hockemeyer, Cornelis Blauwendraat, Frank Soldner
+bioRxiv 2024.02.12.579917; doi: https://doi.org/10.1101/2024.02.12.579917
 
 In the iSCORE-PD manuscript above, this collection of scripts is used to analyze scRNASeq data from hESC-derived dopaminergic neurons.
 
