@@ -8,6 +8,7 @@ bioRxiv 2024.02.12.579917; doi: https://doi.org/10.1101/2024.02.12.579917
 
 
 
+
 **WORKFLOW OVERVIEW:**
 
 In the iSCORE-PD manuscript above, this collection of scripts is used to analyze scRNASeq data from hESC-derived dopaminergic neurons. CellRanger was run on Linux in an HPC environment, then count matrices were processed and analyzed in R on Windows 11.
@@ -21,6 +22,7 @@ B) Seurat in R:
    2) Integrate the 3 subclones to generate an aggregate dataset of human midbrain DANs.
    3) Evaluate cells against FOUNDIN-PD reference dataset.
    4) Visualize results, generate necessary plots.
+
 
 
 ## System Requirements
@@ -38,6 +40,8 @@ B) Seurat in R:
 - This code requires R (version 4.1.0 or higher) with various packages, specified in "/R_Scripts/R_sessioninfo.txt"
 - Cell Ranger (10x Genomics) - v8.0.1
 
+
+
 #### Quick start
 We provide a Conda environment file to set up all required dependencies. In Linux:
 
@@ -49,8 +53,11 @@ conda env create -f R_Scripts/seuratv4_environment.yml
 conda activate iSCORE-PD-scRNAseq
 ```
 
+
+
 ### Data Download
 The RDS files containing processed Seurat objects can be accessed at [URL_TO_DATA].
+
 
 
 ## Instructions for Use
@@ -70,6 +77,8 @@ The RDS files containing processed Seurat objects can be accessed at [URL_TO_DAT
    ```R
    Rscript R_Scripts/03_visualization.R
    ```
+
+
 
 ## License
 This project is licensed under the [LICENSE_NAME] - see the [LICENSE](LICENSE) file for details.
