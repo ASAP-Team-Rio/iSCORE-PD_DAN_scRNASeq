@@ -81,7 +81,7 @@ The RDS files containing processed Seurat objects can be accessed at [URL_TO_DAT
 
 
 ## License
-This project is licensed under the [LICENSE_NAME] - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 For questions about the code, please contact Jesse Dunnack - jessedunnack@gmail.com / jessedunnack@berkeley.edu
